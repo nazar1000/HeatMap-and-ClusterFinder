@@ -1,0 +1,15 @@
+body {
+
+
+}
+
+body #nav-container {
+	float: left;
+	background-color: red;
+}
+
+canvas {
+	border: 1px solid red;
+	/* display: block; */
+	/* object-fit: contain; */
+}
