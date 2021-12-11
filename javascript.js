@@ -26,6 +26,22 @@ canvas.addEventListener("mousedown", function () {
     mouse.click = true;
 })
 
+//UI settings
+let noOfPoints = 100;
+let nodeDistance = 50;
+let isClustersToggle = true;
+let isHeatmapToggle = true;
+let isRelativeCentering = false;
+
+let isReset = false;
+function reset() {
+    nodes.splice(0);
+    objects.splice(0);
+    groups.splice(0);
+    init();
+}
+
+
 let link = 0;
 let order = 0;
 
@@ -48,8 +64,8 @@ class Node {
 
     draw() {
         ctx.beginPath();
-        ctx.fillStyle = "green";
-        ctx.rect(this.x - 1, this.y - 1, 2, 2);
+        ctx.fillStyle = "red";
+        ctx.rect(this.x - 2, this.y - 2, 4, 4);
 
         if (this.orderNo != undefined) {
             ctx.font = "10px Arial";
@@ -57,7 +73,7 @@ class Node {
             // ctx.fillText("G " + this.groupNo, this.x, this.y + 5);
         }
 
-        ctx.stroke();
+        ctx.fill();
     }
 }
 
@@ -79,8 +95,10 @@ class Object {
     draw() {
         if (this.x != undefined && this.y != undefined && this.nodesNo > 2) {
             ctx.beginPath();
-            ctx.strokeStyle = "red";
+            ctx.strokeStyle = "blue";
+            ctx.fillStyle = "blue";
             ctx.rect(this.x - this.spreadX / 2, this.y - this.spreadY / 2, this.spreadX, this.spreadY);
+            ctx.fillText("G:" + this.groupNo, this.x - this.spreadX / 2, this.y - this.spreadY / 2 + 10);
             ctx.stroke();
         }
     }
@@ -88,7 +106,7 @@ class Object {
 
 function init() {
     //Spawns random possition nodes
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < noOfPoints; i++) {
         let randomX = Math.random() * canvas.width;
         let randomY = Math.random() * canvas.height;
         nodes.push(new Node(randomX, randomY));
@@ -97,6 +115,10 @@ function init() {
 
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (isReset) {
+        isReset = false;
+        reset();
+    }
 
     //Manually creates nodes
     if (mouse.click) {
@@ -109,16 +131,20 @@ function animate() {
         nodes[i].draw();
     }
 
-    //drawLine(); //connects dots ... used somewhere else...
-    drawHeatMap();
-    findCluster();
+    // drawLine(); //connects dots ... used somewhere else...
+    if (isHeatmapToggle) drawHeatMap();
+    if (isClustersToggle) findCluster();
 
     //displays arrays for groups (to be replaced with object class)  //remove
     for (let i = 0; i < objects.length; i++) {
         if (objects[i] == undefined) continue;
 
+        ctx.beginPath();
+        ctx.fillStyle = "green";
         ctx.font = "10px Arial";
         ctx.fillText("G " + objects[i].groupNo + ": " + objects[i].nodesNo, 0, 10 * i + 10)
+        ctx.fill();
+
     }
 
     //Finds medians for diffrent node groups.
@@ -152,17 +178,20 @@ function animate() {
                 //Calculates the center of object based on ratio of coridinates 
                 //(e.g more nodes on left means center will be more biased towards left)
 
-                // let objX = Math.round(totalX/totalNodes);
-                // let objY = Math.round(totalY/totalNodes);
-                // objects[obj].x = objX;
-                // objects[obj].y = objY;
+                if (isRelativeCentering) {
+                    let objX = Math.round(totalX / totalNodes);
+                    let objY = Math.round(totalY / totalNodes);
+                    objects[obj].x = objX;
+                    objects[obj].y = objY;
 
-                //calcualtes center of object
-                objects[obj].x = minX + (maxX - minX) / 2;
-                objects[obj].y = minY + (maxY - minY) / 2;
+                } else {
+                    //calcualtes center of object
+                    objects[obj].x = minX + (maxX - minX) / 2;
+                    objects[obj].y = minY + (maxY - minY) / 2;
 
-                objects[obj].spreadX = maxX - minX;
-                objects[obj].spreadY = maxY - minY;
+                    objects[obj].spreadX = maxX - minX;
+                    objects[obj].spreadY = maxY - minY;
+                }
             }
         }
     }
@@ -234,7 +263,6 @@ function drawHeatMap() {
         isHeatAreasReady = false;
     }
 
-
     for (let x = 0; x < areaSize; x++) {
         for (let y = 0; y < areaSize; y++) {
             ctx.beginPath();
@@ -256,13 +284,10 @@ function drawHeatMap() {
 
             ctx.fillStyle = "rgba(" + red + "," + green + "," + 0 + ",0.1)";
 
-
-
             ctx.fill();
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = "grey";
             ctx.stroke();
-
-
-
         }
     }
 
@@ -270,14 +295,14 @@ function drawHeatMap() {
 }
 
 let isMergingSameSize = true;
-let nodeDistance = 50;
+// nodeDistance
 function findCluster() {
     //debug 
     if (nodes.length == 5) {
         // console.log("test");
     }
 
-    for (let index = 0; index < 1; index++) { //testing difference
+    for (let index = 0; index < 1; index++) { //testing difference Not important
         for (let n = 0; n < nodes.length; n++) {
             for (let n1 = 0; n1 < nodes.length; n1++) {
                 if (nodes[n].id == nodes[n1].id) continue;
@@ -327,7 +352,7 @@ function findCluster() {
                     // if (nodes[n].groupNo == 6) ctx.strokeStyle = "orange";
                     // if (nodes[n].groupNo == 7) ctx.strokeStyle = "brown";
                     // if (nodes[n].groupNo == 8) ctx.strokeStyle = "grey";
-                    ctx.lineWidth = 2;
+                    ctx.lineWidth = 1;
 
 
 
